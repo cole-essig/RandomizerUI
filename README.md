@@ -1,69 +1,45 @@
 # React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Zelda Randomizer Run Tracker
 
-Currently, two official plugins are available:
+Zelda Randomizer Run Tracker is a web-based tool designed to track and display game data for **random spawn Zelda runs**.  
+It provides a clean, toggleable UI so players can mark collected items, equipment, and key progression elements during a run.  
+Whether you’re racing friends, streaming, or just diving into a chaotic randomized adventure, this tracker helps you stay organized and focused on gameplay.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Toggleable Tracker:** Quickly mark items, gear, and upgrades as found or missing.
+- **Run Overview:** Auto-updates to reflect your current progression.
+- **Stream-Friendly UI:** Simple, bold visuals for on-screen overlay or sharing.
+- **Responsive Design:** Works seamlessly across desktop, tablet, and mobile devices.
+- **Customizable Layout:** Adjust which elements you want displayed.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## Tech Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Frontend:** React.js (with Vite)
+- **Language:** TypeScript
+- **Styling:** TailwindCSS · shadcn/ui (for component library) · GSAP (smooth animations)
+- **Extras:** Zod (validation) · Google Fonts
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Getting Started
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+
+Make sure you have **npm** installed.
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/zelda-randomizer-tracker.git
+cd zelda-randomizer-tracker
+npm install
+npm run dev
 ```
