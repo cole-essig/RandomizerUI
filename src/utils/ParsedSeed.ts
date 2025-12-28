@@ -15,6 +15,7 @@ export type HintEntry = {
   location: string;
   hint: string;
   type?: string;
+  color?: string;
 };
 
 export type ParsedSeed = {
@@ -247,57 +248,78 @@ function parseEntranceList(block: string): EntranceEntry[] {
 }
 
 /**
- * Parse Hints into structured data
+ * Parse Hints into structured data - parse organized hint categories
  */
 function parseHintsList(block: string): HintEntry[] {
   const hints: HintEntry[] = [];
+  let currentType: string | null = null;
   
-  block.split("\n").forEach(line => {
-    if (!line.trim()) return;
+  const lines = block.split("\n");
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
     
-    // Look for hint format like "Location: Hint text"
-    const hintMatch = line.match(/^(.*?):\s*(.+)$/);
-    if (hintMatch) {
-      const location = hintMatch[1].trim();
-      const hint = hintMatch[2].trim();
-      
-      // Try to determine hint type based on content and location
-      let type = "general";
-      const hintLower = hint.toLowerCase();
-      const locationLower = location.toLowerCase();
-      
-      // Check hint content for type indicators
-      if (hintLower.includes("foolish") || hintLower.includes("fool") || 
-          hintLower.includes("nothing") || hintLower.includes("useless") ||
-          hintLower.includes("no way") || hintLower.includes("not the way")) {
-        type = "foolish";
-      } else if (hintLower.includes("way of the hero") || hintLower.includes("hero") ||
-                 hintLower.includes("path of the hero") || hintLower.includes("heroic")) {
-        type = "hero";
-      } else if (hintLower.includes("on the way") || hintLower.includes("path") || 
-                 hintLower.includes("leads to") || hintLower.includes("points to") ||
-                 hintLower.includes("road to") || hintLower.includes("journey")) {
-        type = "path";
-      } else if (hintLower.includes("sometimes") || hintLower.includes("they say") ||
-                 hintLower.includes("it is said") || hintLower.includes("rumor") ||
-                 locationLower.includes("gossip") || locationLower.includes("stone")) {
-        type = "gossip";
-      } else if (hintLower.includes("woth") || hintLower.includes("way of the")) {
-        type = "hero";
-      } else if (hintLower.includes("barren") || hintLower.includes("nothing")) {
-        type = "foolish";
-      }
-      
-      hints.push({ location, hint, type });
-    } else if (line.trim().length > 0) {
-      // Handle lines that might not have the colon format
-      hints.push({ 
-        location: "Unknown", 
-        hint: line.trim(), 
-        type: "general" 
-      });
+    // Check for category headers
+    if (line === "Foolish:") {
+      currentType = "foolish";
+      continue;
+    } else if (line === "Specific Hints:") {
+      currentType = "specific";
+      continue;
+    } else if (line === "Regional Hints:") {
+      currentType = "regional";
+      continue;
     }
-  });
+    
+    // Skip if we're not in one of our desired categories
+    if (!currentType) continue;
+    
+    // Parse hint entries - they can be in different formats
+    if (currentType === "foolish") {
+      // Foolish hints format: "Location    Destination"
+      const parts = line.split(/\s{2,}/); // Split on 2+ spaces
+      if (parts.length >= 2) {
+        hints.push({
+          location: parts[0].trim(),
+          hint: parts[1].trim(),
+          type: "foolish",
+          color: "default"
+        });
+      }
+    } else if (currentType === "specific") {
+      // Specific hints can span multiple lines
+      // Format: "Location    Target Location    Item"
+      const parts = line.split(/\s{2,}/); // Split on 2+ spaces
+      if (parts.length >= 3) {
+        hints.push({
+          location: parts[0].trim(),
+          hint: `${parts[1].trim()} - ${parts[2].trim()}`,
+          type: "specific",
+          color: "purple"
+        });
+      } else if (parts.length === 2 && !line.startsWith(" ")) {
+        // Single line specific hint
+        hints.push({
+          location: parts[0].trim(),
+          hint: parts[1].trim(),
+          type: "specific",
+          color: "purple"
+        });
+      }
+    } else if (currentType === "regional") {
+      // Regional hints format: "Location    Region    Item"
+      const parts = line.split(/\s{2,}/); // Split on 2+ spaces
+      if (parts.length >= 3) {
+        hints.push({
+          location: parts[0].trim(),
+          hint: `${parts[1].trim()} has ${parts[2].trim()}`,
+          type: "regional",
+          color: "green"
+        });
+      }
+    }
+  }
   
   return hints;
 }

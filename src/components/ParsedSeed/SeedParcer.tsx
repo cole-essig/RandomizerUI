@@ -44,37 +44,51 @@ function SeedUploader() {
 {/* Tabbed Interface */}
         <div className="bg-gray-800 rounded w-full">
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-600">
-            <button
-              className={`px-6 py-3 font-semibold transition-colors ${
-                activeTab === 'locations'
-                  ? 'bg-blue-600 text-white border-b-2 border-blue-400'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-              } rounded-tl`}
-              onClick={() => setActiveTab('locations')}
-            >
-              Locations
-            </button>
-            <button
-              className={`px-6 py-3 font-semibold transition-colors ${
-                activeTab === 'hints'
-                  ? 'bg-blue-600 text-white border-b-2 border-blue-400'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-              }`}
-              onClick={() => setActiveTab('hints')}
-            >
-              Hints
-            </button>
-            <button
-              className={`px-6 py-3 font-semibold transition-colors ${
-                activeTab === 'entrances'
-                  ? 'bg-blue-600 text-white border-b-2 border-blue-400'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-              } rounded-tr`}
-              onClick={() => setActiveTab('entrances')}
-            >
-              Entrances
-            </button>
+          <div className="flex justify-between items-center border-b border-gray-600">
+            <div className="flex">
+              <button
+                className={`px-6 py-3 font-semibold transition-colors ${
+                  activeTab === 'locations'
+                    ? 'bg-blue-600 text-white border-b-2 border-blue-400'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                } rounded-tl`}
+                onClick={() => setActiveTab('locations')}
+              >
+                Locations
+              </button>
+              <button
+                className={`px-6 py-3 font-semibold transition-colors ${
+                  activeTab === 'hints'
+                    ? 'bg-blue-600 text-white border-b-2 border-blue-400'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                }`}
+                onClick={() => setActiveTab('hints')}
+              >
+                Hints
+              </button>
+              <button
+                className={`px-6 py-3 font-semibold transition-colors ${
+                  activeTab === 'entrances'
+                    ? 'bg-blue-600 text-white border-b-2 border-blue-400'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                }`}
+                onClick={() => setActiveTab('entrances')}
+              >
+                Entrances
+              </button>
+            </div>
+            <div className="flex items-center gap-2 px-4">
+              <input
+                type="checkbox"
+                id="hideSelected"
+                className="w-4 h-4 cursor-pointer"
+                checked={hideSelected}
+                onChange={(e) => setHideSelected(e.target.checked)}
+              />
+              <label htmlFor="hideSelected" className="text-white cursor-pointer">
+                Hide Selected
+              </label>
+            </div>
           </div>
 
           {/* Tab Content */}
@@ -92,9 +106,9 @@ function SeedUploader() {
                             <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
                               <thead className="bg-gray-700">
                                 <tr>
+                                  <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
                                   <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Location</th>
                                   <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Item</th>
-                                  <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -104,8 +118,6 @@ function SeedUploader() {
                                   .map(({ location, locIdx, key }) => {
                                   return (
                                     <tr key={locIdx} className="hover:bg-gray-800">
-                                      <td className="border border-gray-400 px-3 py-2">{location.name}</td>
-                                      <td className="border border-gray-400 px-3 py-2">{location.item}</td>
                                       <td className="border border-gray-400 px-3 py-2 text-center">
                                         <input
                                           type="checkbox"
@@ -121,6 +133,10 @@ function SeedUploader() {
                                             setCheckedLocations(newChecked);
                                           }}
                                         />
+                                      </td>
+                                      <td className="border border-gray-400 px-3 py-2">{location.name}</td>
+                                      <td className="border border-gray-400 px-3 py-2">
+                                        {checkedLocations.has(key) ? location.item : '????'}
                                       </td>
                                     </tr>
                                   );
@@ -139,30 +155,15 @@ function SeedUploader() {
             {activeTab === 'hints' && (
               <div>
                 <h3 className="text-blue-400 text-lg font-bold mb-3">Hints</h3>
-                {/* Debug info */}
-                <div className="mb-4 text-sm text-gray-400">
-                  Debug: Found {data.hints?.length || 0} hints
-                  {data.hints?.length > 0 && (
-                    <div className="mt-1">
-                      <div>Sample: {JSON.stringify(data.hints[0])}</div>
-                      <div className="mt-1">First few hints:</div>
-                      {data.hints.slice(0, 3).map((h, i) => (
-                        <div key={i} className="ml-2 text-xs">
-                          {i+1}. Location: "{h.location}" | Hint: "{h.hint}" | Type: "{h.type}"
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
                 {data.hints && data.hints.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
                       <thead className="bg-gray-700">
                         <tr>
+                          <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
                           <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Location</th>
                           <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Hint</th>
                           <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Type</th>
-                          <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -172,19 +173,6 @@ function SeedUploader() {
                           .map(({ hint, idx, key }) => {
                           return (
                             <tr key={idx} className="hover:bg-gray-800">
-                              <td className="border border-gray-400 px-3 py-2">{hint.location}</td>
-                              <td className="border border-gray-400 px-3 py-2">{hint.hint}</td>
-                              <td className="border border-gray-400 px-3 py-2">
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                  hint.type === 'foolish' ? 'bg-red-600 text-white' :
-                                  hint.type === 'hero' ? 'bg-yellow-600 text-white' :
-                                  hint.type === 'path' ? 'bg-green-600 text-white' :
-                                  hint.type === 'gossip' ? 'bg-purple-600 text-white' :
-                                  'bg-gray-600 text-white'
-                                }`}>
-                                  {hint.type || 'unknown'}
-                                </span>
-                              </td>
                               <td className="border border-gray-400 px-3 py-2 text-center">
                                 <input
                                   type="checkbox"
@@ -200,6 +188,20 @@ function SeedUploader() {
                                     setCheckedHints(newChecked);
                                   }}
                                 />
+                              </td>
+                              <td className="border border-gray-400 px-3 py-2">{hint.location}</td>
+                              <td className="border border-gray-400 px-3 py-2">
+                                {checkedHints.has(key) ? hint.hint : '????'}
+                              </td>
+                              <td className="border border-gray-400 px-3 py-2">
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                  hint.color === 'purple' ? 'bg-purple-600 text-white' :
+                                  hint.color === 'green' ? 'bg-green-600 text-white' :
+                                  hint.type === 'foolish' ? 'bg-red-600 text-white' :
+                                  'bg-gray-600 text-white'
+                                }`}>
+                                  {hint.type || 'unknown'}
+                                </span>
                               </td>
                             </tr>
                           );
@@ -221,9 +223,9 @@ function SeedUploader() {
                     <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
                       <thead className="bg-gray-700">
                         <tr>
+                          <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
                           <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">From</th>
                           <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">To</th>
-                          <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -233,8 +235,6 @@ function SeedUploader() {
                           .map(({ entrance, idx, key }) => {
                           return (
                             <tr key={idx} className="hover:bg-gray-800">
-                              <td className="border border-gray-400 px-3 py-2">{entrance.from}</td>
-                              <td className="border border-gray-400 px-3 py-2">{entrance.to}</td>
                               <td className="border border-gray-400 px-3 py-2 text-center">
                                 <input
                                   type="checkbox"
@@ -250,6 +250,10 @@ function SeedUploader() {
                                     setCheckedEntrances(newChecked);
                                   }}
                                 />
+                              </td>
+                              <td className="border border-gray-400 px-3 py-2">{entrance.from}</td>
+                              <td className="border border-gray-400 px-3 py-2">
+                                {checkedEntrances.has(key) ? entrance.to : '????'}
                               </td>
                             </tr>
                           );
@@ -351,18 +355,6 @@ function SeedUploader() {
       
       {isParsed && parsed && (
         <div className="mt-4">
-          <div className="mb-4 flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="hideSelected"
-              className="w-4 h-4 cursor-pointer"
-              checked={hideSelected}
-              onChange={(e) => setHideSelected(e.target.checked)}
-            />
-            <label htmlFor="hideSelected" className="text-white cursor-pointer">
-              Hide Selected Rows
-            </label>
-          </div>
           {renderParsedSeed(parsed)}
         </div>
       )}
