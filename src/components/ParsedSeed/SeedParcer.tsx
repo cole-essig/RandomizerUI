@@ -11,7 +11,10 @@ function SeedUploader() {
   const [checkedEntrances, setCheckedEntrances] = useState<Set<string>>(new Set());
   const [checkedHints, setCheckedHints] = useState<Set<string>>(new Set());
   const [hideSelected, setHideSelected] = useState(false);
-  const [activeTab, setActiveTab] = useState<'locations' | 'hints' | 'entrances'>('locations');
+  const [activeTab, setActiveTab] = useState<'locations' | 'hints' | 'entrances' | 'notes'>('locations');
+  const [notes, setNotes] = useState<{id: number, text: string, timestamp: Date}[]>([]);
+  const [currentNote, setCurrentNote] = useState('');
+  const [noteIdCounter, setNoteIdCounter] = useState(1);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,6 +29,19 @@ function SeedUploader() {
     const result = parseSeedFile(text);
     setParsed(result);
     setIsParsed(true);
+  };
+
+  const handleAddNote = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && currentNote.trim()) {
+      const newNote = {
+        id: noteIdCounter,
+        text: currentNote.trim(),
+        timestamp: new Date()
+      };
+      setNotes([...notes, newNote]);
+      setCurrentNote('');
+      setNoteIdCounter(noteIdCounter + 1);
+    }
   };
 
   // Function to render parsed seed data
@@ -76,6 +92,16 @@ function SeedUploader() {
               >
                 Entrances
               </button>
+              <button
+                className={`px-6 py-3 font-semibold transition-colors ${
+                  activeTab === 'notes'
+                    ? 'bg-blue-600 text-white border-b-2 border-blue-400'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                }`}
+                onClick={() => setActiveTab('notes')}
+              >
+                Notes
+              </button>
             </div>
             <div className="flex items-center gap-2 px-4">
               <input
@@ -98,9 +124,16 @@ function SeedUploader() {
                 <h3 className="text-blue-400 text-lg font-bold mb-3">Locations</h3>
                 {data.locations && data.locations.length > 0 && (
                   <div className="space-y-4">
-                    {data.locations.map((region, idx) => (
+                    {data.locations.map((region, idx) => {
+                      // Calculate how many locations in this region are selected
+                      const selectedInRegion = region.locations.filter((_, locIdx) => 
+                        checkedLocations.has(`${idx}-${locIdx}`)
+                      ).length;
+                      const remainingCount = region.count - selectedInRegion;
+                      
+                      return (
                       <div key={idx}>
-                        <h4 className="text-green-400 font-semibold mb-2">{region.region} ({region.count})</h4>
+                        <h4 className="text-green-400 font-semibold mb-2">{region.region} ({remainingCount})</h4>
                         {region.locations.length > 0 && (
                           <div className="overflow-x-auto">
                             <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
@@ -146,7 +179,8 @@ function SeedUploader() {
                           </div>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -263,6 +297,55 @@ function SeedUploader() {
                   </div>
                 ) : (
                   <p className="text-gray-400">No entrances data available.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'notes' && (
+              <div>
+                <h3 className="text-blue-400 text-lg font-bold mb-3">Notes</h3>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Type a note and press Enter to add..."
+                    value={currentNote}
+                    onChange={(e) => setCurrentNote(e.target.value)}
+                    onKeyDown={handleAddNote}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:outline-none focus:border-blue-400"
+                  />
+                </div>
+                {notes.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
+                      <thead className="bg-gray-700">
+                        <tr>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold w-32">Time</th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Note</th>
+                          <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Delete</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {notes.map((note) => (
+                          <tr key={note.id} className="hover:bg-gray-800">
+                            <td className="border border-gray-400 px-3 py-2 text-sm text-gray-300">
+                              {note.timestamp.toLocaleTimeString()}
+                            </td>
+                            <td className="border border-gray-400 px-3 py-2">{note.text}</td>
+                            <td className="border border-gray-400 px-3 py-2 text-center">
+                              <button
+                                onClick={() => setNotes(notes.filter(n => n.id !== note.id))}
+                                className="text-red-400 hover:text-red-300 font-bold"
+                              >
+                                ×
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">No notes yet. Type a note above and press Enter to add it.</p>
                 )}
               </div>
             )}
