@@ -6,6 +6,17 @@ export type LocationEntry = {
   locations: { name: string; item: string }[];
 };
 
+export type EntranceEntry = {
+  from: string;
+  to: string;
+};
+
+export type HintEntry = {
+  location: string;
+  hint: string;
+  type?: string;
+};
+
 export type ParsedSeed = {
   seed: string | null;
   settingsString: string | null;
@@ -15,8 +26,8 @@ export type ParsedSeed = {
   startingItems: Record<string, number | string>;
   junkLocations: string[];
   worldFlags: Record<string, string[]>;
-  entrances: string[];
-  hints: Record<string, any>;
+  entrances: EntranceEntry[];
+  hints: HintEntry[];
   locations: LocationEntry[];
 };
 
@@ -59,11 +70,11 @@ export function parseSeedFile(fileContent: string): ParsedSeed {
 
   // --- Entrances ---
   const entrancesBlock = extractBlock(fileContent, "Entrances", "Hints");
-  const entrances = entrancesBlock.split("\n").map(l => l.trim()).filter(Boolean);
+  const entrances = parseEntranceList(entrancesBlock);
 
   // --- Hints ---
   const hintsBlock = extractBlock(fileContent, "Hints", "===========================================================================");
-  const hints = parseNestedBlock(hintsBlock);
+  const hints = parseHintsList(hintsBlock);
 
   // --- Location List ---
   const locationsBlock = extractBlock(fileContent, "Location List", ""); // until end of file
@@ -202,4 +213,91 @@ function parseLocationList(block: string): LocationEntry[] {
 
   if (currentRegion) regions.push(currentRegion);
   return regions;
+}
+
+/**
+ * Parse Entrances into structured data
+ */
+function parseEntranceList(block: string): EntranceEntry[] {
+  const entrances: EntranceEntry[] = [];
+  
+  block.split("\n").forEach(line => {
+    if (!line.trim()) return;
+    
+    // Look for entrance mappings like "From Location -> To Location"
+    const entranceMatch = line.match(/^(.*?)\s*->\s*(.+)$/);
+    if (entranceMatch) {
+      entrances.push({
+        from: entranceMatch[1].trim(),
+        to: entranceMatch[2].trim()
+      });
+    } else if (line.includes(":")) {
+      // Alternative format like "From Location: To Location"
+      const altMatch = line.match(/^(.*?):\s*(.+)$/);
+      if (altMatch) {
+        entrances.push({
+          from: altMatch[1].trim(),
+          to: altMatch[2].trim()
+        });
+      }
+    }
+  });
+  
+  return entrances;
+}
+
+/**
+ * Parse Hints into structured data
+ */
+function parseHintsList(block: string): HintEntry[] {
+  const hints: HintEntry[] = [];
+  
+  block.split("\n").forEach(line => {
+    if (!line.trim()) return;
+    
+    // Look for hint format like "Location: Hint text"
+    const hintMatch = line.match(/^(.*?):\s*(.+)$/);
+    if (hintMatch) {
+      const location = hintMatch[1].trim();
+      const hint = hintMatch[2].trim();
+      
+      // Try to determine hint type based on content and location
+      let type = "general";
+      const hintLower = hint.toLowerCase();
+      const locationLower = location.toLowerCase();
+      
+      // Check hint content for type indicators
+      if (hintLower.includes("foolish") || hintLower.includes("fool") || 
+          hintLower.includes("nothing") || hintLower.includes("useless") ||
+          hintLower.includes("no way") || hintLower.includes("not the way")) {
+        type = "foolish";
+      } else if (hintLower.includes("way of the hero") || hintLower.includes("hero") ||
+                 hintLower.includes("path of the hero") || hintLower.includes("heroic")) {
+        type = "hero";
+      } else if (hintLower.includes("on the way") || hintLower.includes("path") || 
+                 hintLower.includes("leads to") || hintLower.includes("points to") ||
+                 hintLower.includes("road to") || hintLower.includes("journey")) {
+        type = "path";
+      } else if (hintLower.includes("sometimes") || hintLower.includes("they say") ||
+                 hintLower.includes("it is said") || hintLower.includes("rumor") ||
+                 locationLower.includes("gossip") || locationLower.includes("stone")) {
+        type = "gossip";
+      } else if (hintLower.includes("woth") || hintLower.includes("way of the")) {
+        type = "hero";
+      } else if (hintLower.includes("barren") || hintLower.includes("nothing")) {
+        type = "foolish";
+      }
+      
+      hints.push({ location, hint, type });
+    } else if (line.trim().length > 0) {
+      // Handle lines that might not have the colon format
+      hints.push({ 
+        location: "Unknown", 
+        hint: line.trim(), 
+        type: "general" 
+      });
+    }
+  });
+  
+  return hints;
 }

@@ -6,6 +6,12 @@ function SeedUploader() {
   const [parsed, setParsed] = useState<ParsedSeed | null>(null);
   const [isParsed, setIsParsed] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [checkedLocations, setCheckedLocations] = useState<Set<string>>(new Set());
+  const [checkedGenericRows, setCheckedGenericRows] = useState<Set<string>>(new Set());
+  const [checkedEntrances, setCheckedEntrances] = useState<Set<string>>(new Set());
+  const [checkedHints, setCheckedHints] = useState<Set<string>>(new Set());
+  const [hideSelected, setHideSelected] = useState(false);
+  const [activeTab, setActiveTab] = useState<'locations' | 'hints' | 'entrances'>('locations');
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -18,8 +24,6 @@ function SeedUploader() {
     if (!selectedFile) return;
     const text = await selectedFile.text();
     const result = parseSeedFile(text);
-    console.log("Parsed result:", result);
-    console.log("Locations length:", result.locations?.length);
     setParsed(result);
     setIsParsed(true);
   };
@@ -27,53 +31,239 @@ function SeedUploader() {
   // Function to render parsed seed data
   const renderParsedSeed = (data: ParsedSeed) => {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Basic Info */}
-        <div className="bg-gray-800 p-4 rounded">
-          <h3 className="text-blue-400 text-lg font-bold mb-2">Seed Information</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="bg-gray-800 p-4 rounded w-full">
+          <h3 className="text-blue-400 text-lg font-bold mb-3">Seed Information</h3>
+          <div className="grid grid-cols-2 gap-3 text-sm">
             <div><span className="text-blue-300">Seed:</span> <span className="text-white">{data.seed || 'N/A'}</span></div>
             <div><span className="text-blue-300">Settings String:</span> <span className="text-white break-all">{data.settingsString || 'N/A'}</span></div>
           </div>
         </div>
 
-        {/* Settings */}
-        {Object.keys(data.settings).length > 0 && (
-          <div className="bg-gray-800 p-4 rounded">
-            <h3 className="text-blue-400 text-lg font-bold mb-2">Settings</h3>
-            {renderTable(data.settings)}
+{/* Tabbed Interface */}
+        <div className="bg-gray-800 rounded w-full">
+          {/* Tab Navigation */}
+          <div className="flex border-b border-gray-600">
+            <button
+              className={`px-6 py-3 font-semibold transition-colors ${
+                activeTab === 'locations'
+                  ? 'bg-blue-600 text-white border-b-2 border-blue-400'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+              } rounded-tl`}
+              onClick={() => setActiveTab('locations')}
+            >
+              Locations
+            </button>
+            <button
+              className={`px-6 py-3 font-semibold transition-colors ${
+                activeTab === 'hints'
+                  ? 'bg-blue-600 text-white border-b-2 border-blue-400'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+              }`}
+              onClick={() => setActiveTab('hints')}
+            >
+              Hints
+            </button>
+            <button
+              className={`px-6 py-3 font-semibold transition-colors ${
+                activeTab === 'entrances'
+                  ? 'bg-blue-600 text-white border-b-2 border-blue-400'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+              } rounded-tr`}
+              onClick={() => setActiveTab('entrances')}
+            >
+              Entrances
+            </button>
           </div>
-        )}
 
-        {/* Locations by Region */}
-        {data.locations && data.locations.length > 0 && (
-          <div className="bg-gray-800 p-4 rounded">
-            <h3 className="text-blue-400 text-lg font-bold mb-2">Locations</h3>
-            {data.locations.map((region, idx) => (
-              <div key={idx} className="mb-4">
-                <h4 className="text-green-400 font-semibold">{region.region} ({region.count})</h4>
-                {region.locations.length > 0 && (
-                  <table className="border text-white border-gray-400 my-2 w-full">
-                    <thead>
-                      <tr>
-                        <th className="border text-blue-500 px-2 py-1 text-left">Location</th>
-                        <th className="border text-blue-500 px-2 py-1 text-left">Item</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {region.locations.map((location, locIdx) => (
-                        <tr key={locIdx}>
-                          <td className="border px-2 py-1">{location.name}</td>
-                          <td className="border px-2 py-1">{location.item}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+          {/* Tab Content */}
+          <div className="p-4">
+            {activeTab === 'locations' && (
+              <div>
+                <h3 className="text-blue-400 text-lg font-bold mb-3">Locations</h3>
+                {data.locations && data.locations.length > 0 && (
+                  <div className="space-y-4">
+                    {data.locations.map((region, idx) => (
+                      <div key={idx}>
+                        <h4 className="text-green-400 font-semibold mb-2">{region.region} ({region.count})</h4>
+                        {region.locations.length > 0 && (
+                          <div className="overflow-x-auto">
+                            <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
+                              <thead className="bg-gray-700">
+                                <tr>
+                                  <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Location</th>
+                                  <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Item</th>
+                                  <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {region.locations
+                                  .map((location, locIdx) => ({ location, locIdx, key: `${idx}-${locIdx}` }))
+                                  .filter(({ key }) => !hideSelected || !checkedLocations.has(key))
+                                  .map(({ location, locIdx, key }) => {
+                                  return (
+                                    <tr key={locIdx} className="hover:bg-gray-800">
+                                      <td className="border border-gray-400 px-3 py-2">{location.name}</td>
+                                      <td className="border border-gray-400 px-3 py-2">{location.item}</td>
+                                      <td className="border border-gray-400 px-3 py-2 text-center">
+                                        <input
+                                          type="checkbox"
+                                          className="w-4 h-4 cursor-pointer"
+                                          checked={checkedLocations.has(key)}
+                                          onChange={(e) => {
+                                            const newChecked = new Set(checkedLocations);
+                                            if (e.target.checked) {
+                                              newChecked.add(key);
+                                            } else {
+                                              newChecked.delete(key);
+                                            }
+                                            setCheckedLocations(newChecked);
+                                          }}
+                                        />
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            ))}
+            )}
+
+            {activeTab === 'hints' && (
+              <div>
+                <h3 className="text-blue-400 text-lg font-bold mb-3">Hints</h3>
+                {/* Debug info */}
+                <div className="mb-4 text-sm text-gray-400">
+                  Debug: Found {data.hints?.length || 0} hints
+                  {data.hints?.length > 0 && (
+                    <div className="mt-1">
+                      <div>Sample: {JSON.stringify(data.hints[0])}</div>
+                      <div className="mt-1">First few hints:</div>
+                      {data.hints.slice(0, 3).map((h, i) => (
+                        <div key={i} className="ml-2 text-xs">
+                          {i+1}. Location: "{h.location}" | Hint: "{h.hint}" | Type: "{h.type}"
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {data.hints && data.hints.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
+                      <thead className="bg-gray-700">
+                        <tr>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Location</th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Hint</th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">Type</th>
+                          <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.hints
+                          .map((hint, idx) => ({ hint, idx, key: `hint-${idx}` }))
+                          .filter(({ key }) => !hideSelected || !checkedHints.has(key))
+                          .map(({ hint, idx, key }) => {
+                          return (
+                            <tr key={idx} className="hover:bg-gray-800">
+                              <td className="border border-gray-400 px-3 py-2">{hint.location}</td>
+                              <td className="border border-gray-400 px-3 py-2">{hint.hint}</td>
+                              <td className="border border-gray-400 px-3 py-2">
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                  hint.type === 'foolish' ? 'bg-red-600 text-white' :
+                                  hint.type === 'hero' ? 'bg-yellow-600 text-white' :
+                                  hint.type === 'path' ? 'bg-green-600 text-white' :
+                                  hint.type === 'gossip' ? 'bg-purple-600 text-white' :
+                                  'bg-gray-600 text-white'
+                                }`}>
+                                  {hint.type || 'unknown'}
+                                </span>
+                              </td>
+                              <td className="border border-gray-400 px-3 py-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 cursor-pointer"
+                                  checked={checkedHints.has(key)}
+                                  onChange={(e) => {
+                                    const newChecked = new Set(checkedHints);
+                                    if (e.target.checked) {
+                                      newChecked.add(key);
+                                    } else {
+                                      newChecked.delete(key);
+                                    }
+                                    setCheckedHints(newChecked);
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">No hints data available.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'entrances' && (
+              <div>
+                <h3 className="text-blue-400 text-lg font-bold mb-3">Entrances</h3>
+                {data.entrances && data.entrances.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
+                      <thead className="bg-gray-700">
+                        <tr>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">From</th>
+                          <th className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">To</th>
+                          <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.entrances
+                          .map((entrance, idx) => ({ entrance, idx, key: `entrance-${idx}` }))
+                          .filter(({ key }) => !hideSelected || !checkedEntrances.has(key))
+                          .map(({ entrance, idx, key }) => {
+                          return (
+                            <tr key={idx} className="hover:bg-gray-800">
+                              <td className="border border-gray-400 px-3 py-2">{entrance.from}</td>
+                              <td className="border border-gray-400 px-3 py-2">{entrance.to}</td>
+                              <td className="border border-gray-400 px-3 py-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 cursor-pointer"
+                                  checked={checkedEntrances.has(key)}
+                                  onChange={(e) => {
+                                    const newChecked = new Set(checkedEntrances);
+                                    if (e.target.checked) {
+                                      newChecked.add(key);
+                                    } else {
+                                      newChecked.delete(key);
+                                    }
+                                    setCheckedEntrances(newChecked);
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">No entrances data available.</p>
+                )}
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Other sections can be added here */}
       </div>
@@ -87,28 +277,52 @@ function SeedUploader() {
         new Set(data.flatMap((item) => Object.keys(item || {})))
       );
       return (
-        <table className="border text-white border-gray-400 my-2">
-          <thead>
-            <tr>
-              {headers.map((header) => (
-                <th key={header} className="border text-blue-500 px-2 py-1">{header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row: any, idx: number) => (
-              <tr key={idx}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-400 bg-gray-900 text-white">
+            <thead className="bg-gray-700">
+              <tr>
                 {headers.map((header) => (
-                  <td key={header} className="border px-2 py-1">
-                    {typeof row[header] === "object" && row[header] !== null
-                      ? renderTable(row[header])
-                      : String(row[header] ?? "")}
-                  </td>
+                  <th key={header} className="border border-gray-400 px-3 py-2 text-left text-blue-400 font-semibold">{header}</th>
                 ))}
+                <th className="border border-gray-400 px-3 py-2 text-center text-blue-400 font-semibold w-20">Select</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data
+                .map((row: any, idx: number) => ({ row, idx, key: `generic-${idx}-${JSON.stringify(row).slice(0, 50)}` }))
+                .filter(({ key }) => !hideSelected || !checkedGenericRows.has(key))
+                .map(({ row, idx, key }) => {
+                return (
+                  <tr key={idx} className="hover:bg-gray-800">
+                    {headers.map((header) => (
+                      <td key={header} className="border border-gray-400 px-3 py-2">
+                        {typeof row[header] === "object" && row[header] !== null
+                          ? renderTable(row[header])
+                          : String(row[header] ?? "")}
+                      </td>
+                    ))}
+                    <td className="border border-gray-400 px-3 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 cursor-pointer"
+                        checked={checkedGenericRows.has(key)}
+                        onChange={(e) => {
+                          const newChecked = new Set(checkedGenericRows);
+                          if (e.target.checked) {
+                            newChecked.add(key);
+                          } else {
+                            newChecked.delete(key);
+                          }
+                          setCheckedGenericRows(newChecked);
+                        }}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       );
     } else if (typeof data === "object" && data !== null) {
       return renderTable([data]);
@@ -134,7 +348,24 @@ function SeedUploader() {
           Parse File
         </button>
       </div>
-      {isParsed && parsed && <div className="mt-4">{renderParsedSeed(parsed)}</div>}
+      
+      {isParsed && parsed && (
+        <div className="mt-4">
+          <div className="mb-4 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="hideSelected"
+              className="w-4 h-4 cursor-pointer"
+              checked={hideSelected}
+              onChange={(e) => setHideSelected(e.target.checked)}
+            />
+            <label htmlFor="hideSelected" className="text-white cursor-pointer">
+              Hide Selected Rows
+            </label>
+          </div>
+          {renderParsedSeed(parsed)}
+        </div>
+      )}
     </div>
   );
 }

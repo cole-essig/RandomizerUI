@@ -4,7 +4,7 @@ import SeedUploader from '../ParsedSeed/SeedParcer'
 function App() {
   return (
     <div className="App">
-      <h1 className='text-2xl font-bold text-white'>Welcome to Vite + React</h1>
+      <h1 className='text-2xl font-bold text-white'>Are You Ready To Link Up Big Damage?</h1>
       <SeedUploader />
     </div>
   )
